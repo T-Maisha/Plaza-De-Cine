@@ -1,0 +1,141 @@
+//Registration
+->sequence
+CREATE SEQUENCE customer_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOMAXVALUE
+    NOCACHE;
+
+->trigger
+CREATE OR REPLACE TRIGGER customer_trigger
+BEFORE INSERT ON Customer
+FOR EACH ROW
+BEGIN
+    :NEW.C_ID := customer_seq.NEXTVAL;
+END;
+ALTER TRIGGER customer_trigger ENABLE;
+            $query = "SELECT customer_seq.CURRVAL FROM DUAL";
+$sql = "INSERT INTO Customer ( C_Name, C_Mail, District, Zip_Code, Password) VALUES (:name, :email, :district, :zipcode, :hashedPassword)";
+            $phoneSql = "INSERT INTO C_mobil_no (C_ID, phone) VALUES (:c_id, :phone)";
+
+
+
+//login
+->pl/sql
+$sql = "BEGIN
+                SELECT password INTO :hashed_password FROM customer WHERE c_mail = :email;
+            EXCEPTION
+                WHEN NO_DATA_FOUND THEN
+                    RAISE_APPLICATION_ERROR(-20002, 'Invalid email');
+            END;";
+
+
+
+//booking
+->simple query
+        $sql = "SELECT ticket_seq.NEXTVAL FROM DUAL";
+
+        $sql = "INSERT INTO seat_c  VALUES (:ticketID, :seatID, :movieName, TO_TIMESTAMP(:showDateTime, 'MM/DD/YYYY HH24:MI:SS'))";
+
+        $sql = "INSERT INTO Tickets (T_ID, C_name, MovieName, showtime, seat_id, total) 
+                VALUES (:ticketID, :customerName, :movieName, TO_TIMESTAMP(:showDateTime, 'MM/DD/YYYY HH24:MI:SS'), :seatIDs, :totalPrice)";
+  
+            $sql = "SELECT seat_id FROM seat_c WHERE MovieName = :movieName AND showtime = TO_TIMESTAMP(:showDateTime, 'MM/DD/YYYY HH24:MI:SS')";
+
+
+
+//Calender
+->simple query
+    $sql = "SELECT
+              Movie_Name,
+              Capacity,
+              TO_CHAR(Show_Date, 'YYYY-MM-DD') AS Show_Date,
+              TO_CHAR(Show_Date, 'HH24:MI:SS') AS Show_Time
+            FROM
+              hall_Room
+              NATURAL JOIN show
+              NATURAL JOIN movies
+            WHERE
+              TO_CHAR(Show_Date, 'MM/DD/YYYY') = '$date'
+              and Movie_Name = '$movieName'";
+
+
+
+//forum
+->simple query
+  $query = "SELECT rating FROM movies WHERE MOVIE_NAME = :movieName";
+
+    $updateQuery = "UPDATE movies SET rating = :newRating WHERE MOVIE_NAME = :movieName";
+
+
+
+//manager-page
+->simple query
+    $stmt = oci_parse($conn, "DELETE FROM c_mobil_no WHERE c_id = :customerId AND phone = :phoneNumber");
+        $stmt = oci_parse($conn, "DELETE FROM customer WHERE c_id = :customerId");
+
+->view
+CREATE or replace VIEW customer_list AS
+SELECT c_id as "Customer ID", C_Name as "Customer Name", phone as "Mobile No", C_Mail as "Customer E-mail", District, Zip_Code as "Zip Code"
+FROM Customer
+NATURAL JOIN c_mobil_no
+order by c_id;
+
+            $sql = "SELECT * FROM customer_list";
+
+            $sql = "SELECT * FROM manager";
+
+->simple query
+ $sql = "SELECT FO.STALL_NAME, H.PRICE, F.FOOD_NAME, F.FOOD_TYPE
+        FROM food_stall FO
+        JOIN have H ON FO.FS_ID = H.FS_ID
+        JOIN food F ON H.FOOD_ID = F.FOOD_ID";
+
+->ceomplex query
+ $sql = "SELECT MIN(H.PRICE) AS MIN_PRICE, F.FOOD_TYPE 
+                FROM have H 
+                JOIN food F ON H.food_id = F.food_id 
+                GROUP BY F.FOOD_TYPE"; 
+
+
+
+//movieinfo//search movie
+
+->simple query+in built function+dynamic searching
+$sql = "SELECT
+    Movie_Name,
+    Capacity,
+    TO_CHAR(Show_Date, 'YYYY-MM-DD') AS Show_Date,
+    TO_CHAR(Show_Date, 'HH24:MI:SS') AS Show_Time
+  FROM
+    hall_Room
+    NATURAL JOIN show
+    NATURAL JOIN movies
+  WHERE
+    LOWER(Movie_Name) LIKE '%' || LOWER(:movie_name) || '%'";
+
+
+
+//movies-blocks
+->simple query
+        $query = 'SELECT movie_name, genre, rating, duration, star_name, movie_desc FROM movies';
+
+
+
+//ticket
+->simple query
+$sql = "SELECT T_ID, C_name, MovieName, showtime, seat_id, total FROM Tickets where T_ID=:ticket_id";
+
+
+
+//update
+->simple query
+    $query = "SELECT * FROM customer_list WHERE \"Customer E-mail\"  = :email";
+
+    $query = "UPDATE customer SET c_name = :name, DISTRICT = :address, zip_code = :zipcode WHERE c_id = :c_id";
+
+        $query = "INSERT INTO C_mobil_no (C_ID, phone) VALUES (:c_id, :mobileno)";
+
+        $query = "DELETE FROM C_mobil_no WHERE C_ID = $c_id AND phone = '$removemobileno'";
+
+                $query = "SELECT phone FROM C_mobil_no WHERE C_ID = :c_id";
